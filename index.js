@@ -4,18 +4,7 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
-const allowedOrigins = [
-  'http://localhost:5173',          // for local dev
-  'https://challa.netlify.app'      // for production frontend
-];
-
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  methods: ['GET','POST','PUT','DELETE']
-}));
-
+app.use(cors());
 app.use(express.json());
 
 
@@ -82,6 +71,5 @@ app.post('/submit-form', async (req, res) => {
     }
 });
 
-// Start server
 const PORT = 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
