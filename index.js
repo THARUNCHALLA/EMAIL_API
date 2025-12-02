@@ -13,16 +13,15 @@ const allowedOrigins = [
 app.use(cors({
   origin: function(origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) return callback(null, false);
-    return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error("CORS not allowed for this origin"));
   },
-  methods: ["GET","POST","OPTIONS"],
+  methods: ["GET", "POST", "OPTIONS"],
   credentials: true
 }));
 
 app.options("*", cors());
 app.use(express.json());
-
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -32,11 +31,10 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-transporter.verify((error, success) => {
-  if (error) console.error("Email transporter setup error:", error);
+transporter.verify((err, success) => {
+  if (err) console.error("Email transporter setup error:", err);
   else console.log("Email transporter is ready");
 });
-
 
 app.get("/test-email", async (req, res) => {
   try {
@@ -52,7 +50,6 @@ app.get("/test-email", async (req, res) => {
     res.status(500).json({ error: "Failed to send test email" });
   }
 });
-
 
 app.post("/submit-form", async (req, res) => {
   const { name, email, subject, message } = req.body;
@@ -81,6 +78,18 @@ app.post("/submit-form", async (req, res) => {
     console.error(err);
     res.status(500).json({ error: "Failed to send emails", details: err.message });
   }
+});
+
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
+app.use((err, req, res, next) => {
+  if (err.message && err.message.includes("CORS")) {
+    return res.status(403).json({ error: err.message });
+  }
+  console.error(err);
+  res.status(500).json({ error: "Internal server error" });
 });
 
 const PORT = process.env.PORT || 5000;
