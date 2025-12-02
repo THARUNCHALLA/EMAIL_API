@@ -4,7 +4,18 @@ const nodemailer = require('nodemailer');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
+const allowedOrigins = [
+  'http://localhost:5173',          // for local dev
+  'https://challa.netlify.app'      // for production frontend
+];
+
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  methods: ['GET','POST','PUT','DELETE']
+}));
+
 app.use(express.json());
 
 
@@ -19,9 +30,9 @@ const transporter = nodemailer.createTransport({
 
 transporter.verify((error, success) => {
     if (error) {
-        console.error('❌ Email transporter setup error:', error);
+        console.error('Email transporter setup error:', error);
     } else {
-        console.log('✅ Email transporter is ready');
+        console.log('Email transporter is ready');
     }
 });
 
