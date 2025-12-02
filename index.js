@@ -10,20 +10,19 @@ const allowedOrigins = [
   "http://localhost:5173"
 ];
 
-app.use(express.json());
-
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin) return callback(null, true); // allow non-browser requests like Postman
-    if (allowedOrigins.indexOf(origin) === -1) {
-      return callback(new Error("CORS not allowed for this origin"), false);
-    }
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) return callback(null, false);
     return callback(null, true);
   },
-  methods: ["GET", "POST"],
-  credentials: true, 
+  methods: ["GET","POST","OPTIONS"],
+  credentials: true
 }));
+
+app.options("*", cors());
 app.use(express.json());
+
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
