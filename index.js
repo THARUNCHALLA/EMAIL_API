@@ -19,8 +19,6 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-app.options("/*", cors());
-
 app.use(express.json());
 
 const resend = new Resend(process.env.RESEND_API_KEY);
