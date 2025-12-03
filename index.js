@@ -1,77 +1,60 @@
-const express = require('express');
-const cors = require('cors');
-const nodemailer = require('nodemailer');
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
+const { Resend } = require("resend");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const transporter = nodemailer.createTransport({
-  host: 'smtppro.zoho.in',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_FROM,
-    pass: process.env.EMAIL_PASS
-  },
-  logger: true,
-  debug: true
-});
-
-
-transporter.verify((error, success) => {
-  if (error) {
-    console.error('Email transporter setup error:', error);
-  } else {
-    console.log('Email transporter is ready');
-  }
-});
-
-app.get('/test-email', async (req, res) => {
+app.get("/test-email", async (req, res) => {
   try {
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: process.env.EMAIL_USER,
-      subject: 'Test Email',
-      text: 'This is a test email from the backend.'
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: process.env.ADMIN_EMAIL,
+      subject: "Test Email",
+      html: "<p>This is a test email from Resend</p>"
     });
-    res.send('Test email sent');
+
+    res.send("Test email sent successfully");
   } catch (error) {
-    console.error('Failed to send test email:', error);
-    res.status(500).send('Failed to send test email');
+    res.status(500).send("Failed to send email");
   }
 });
 
-app.post('/submit-form', async (req, res) => {
+app.post("/submit-form", async (req, res) => {
   const { name, email, message, subject } = req.body;
-  console.log('📨 Form submitted by:', email);
-
-  const adminMailOptions = {
-    from: process.env.EMAIL_USER,
-    to: process.env.EMAIL_USER,
-    replyTo: email,
-    subject: subject || 'New Form Submission',
-    text: `You received a new message:\n\nName: ${name}\nEmail: ${email}\nSubject: ${subject}\nMessage:\n${message}`
-  };
-
-  const userMailOptions = {
-    from: process.env.EMAIL_USER,
-    to: email,
-    subject: 'Thanks for contacting me!',
-    text: `Hi ${name},\n\nThank you for reaching out. I’ve received your message and will get back to you soon.\n\nBest,\nTharun Challa`
-  };
 
   try {
-    await transporter.sendMail(adminMailOptions);
-    await transporter.sendMail(userMailOptions);
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: process.env.ADMIN_EMAIL,
+      subject: subject || "New Form Submission",
+      html: `
+        <h3>New Message</h3>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong><br/>${message}</p>
+      `
+    });
 
-    console.log('Both emails sent successfully');
-    res.status(200).json({ message: 'Emails sent successfully' });
+    await resend.emails.send({
+      from: "onboarding@resend.dev",
+      to: email,
+      subject: "Thanks for contacting me!",
+      html: `
+        <p>Hi ${name},</p>
+        <p>Thank you for reaching out. I have received your message and will get back to you soon.</p>
+        <p>Best,<br/>Tharun Challa</p>
+      `
+    });
+
+    res.json({ success: true, message: "Emails sent successfully" });
+
   } catch (error) {
-    console.error('Error sending emails:', error);
-    res.status(500).json({ error: 'Failed to send emails', details: error.message });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
