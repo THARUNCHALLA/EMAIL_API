@@ -6,16 +6,13 @@ const { Resend } = require("resend");
 const app = express();
 
 const allowedOrigins = [
-  "https://challa.netlify.app",
-  "http://localhost:5173"
+  "https://challa.netlify.app"
 ];
 
 app.use(cors({
-  origin: function (origin, callback) {
+  origin: function(origin, callback) {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
+    if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error("Not allowed by CORS"));
   },
   methods: ["GET", "POST", "OPTIONS"],
@@ -36,8 +33,8 @@ app.get("/test-email", async (req, res) => {
       html: "<p>This is a test email from Resend</p>"
     });
     res.send("Test email sent successfully");
-  } catch (error) {
-    res.status(500).send("Failed to send email");
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
@@ -63,17 +60,17 @@ app.post("/submit-form", async (req, res) => {
       subject: "Thanks for contacting me!",
       html: `
         <p>Hi ${name},</p>
-        <p>I received your message and will reply soon.</p>
+        <p>Thank you for reaching out. I have received your message and will get back to you soon.</p>
         <p>Best,<br/>Tharun Challa</p>
       `
     });
 
     res.json({ success: true, message: "Emails sent successfully" });
 
-  } catch (error) {
-    res.status(500).json({ success: false, error: error.message });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
