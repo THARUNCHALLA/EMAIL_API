@@ -5,13 +5,11 @@ const { Resend } = require("resend");
 
 const app = express();
 
-// Production-only allowed origin
 const allowedOrigins = ["https://challa.netlify.app"];
 
-// CORS middleware
 app.use(cors({
   origin: function(origin, callback) {
-    if (!origin) return callback(new Error("Origin not allowed")); // block non-browser requests without origin
+    if (!origin) return callback(new Error("Origin not allowed"));
     if (allowedOrigins.includes(origin)) return callback(null, true);
     return callback(new Error("Origin not allowed"));
   },
@@ -21,16 +19,12 @@ app.use(cors({
   optionsSuccessStatus: 204
 }));
 
-// Handle OPTIONS preflight for all routes
-app.options("*", cors());
+app.options("/*", cors());
 
-// JSON parser
 app.use(express.json());
 
-// Initialize Resend
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Test email route
 app.get("/test-email", async (req, res) => {
   try {
     await resend.emails.send({
@@ -45,12 +39,10 @@ app.get("/test-email", async (req, res) => {
   }
 });
 
-// Contact form route
 app.post("/submit-form", async (req, res) => {
   const { name, email, message, subject } = req.body;
 
   try {
-    // Email to admin
     await resend.emails.send({
       from: "onboarding@resend.dev",
       to: process.env.ADMIN_EMAIL,
@@ -63,7 +55,6 @@ app.post("/submit-form", async (req, res) => {
       `
     });
 
-    // Confirmation email to user
     await resend.emails.send({
       from: "onboarding@resend.dev",
       to: email,
@@ -76,12 +67,10 @@ app.post("/submit-form", async (req, res) => {
     });
 
     res.json({ success: true, message: "Emails sent successfully" });
-
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
